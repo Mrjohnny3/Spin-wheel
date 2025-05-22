@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin the Wheel & Win!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff007f; /* Deep pink */
+            --secondary-color: #00f0ff; /* Bright cyan */
+            --accent-color: #fffa00; /* Bright yellow */
+            --text-color: #ffffff;
+            --bg-dark: #1a1a2e; /* Dark blue/purple */
+            --bg-light-transparent: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), #7b00ff, var(--accent-color));
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: var(--bg-light-transparent);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px; /* Max width for content */
+        }
+
+        h1 {
+            font-family: 'Lobster', cursive;
+            font-size: 2.3em; /* Thoda chhota kiya gaya */
+            line-height: 1.2; /* Line spacing agar text wrap ho */
+            margin-bottom: 25px;
+            color: #f5f5f5; /* Halkaa سفید rang, zyada contrast ke liye */
+            /* Layered text shadow for better readability and controlled glow */
+            text-shadow: 
+                /* Thin dark outline for crisp edges against busy background */
+                -1px -1px 0 rgba(0,0,0,0.65),  
+                 1px -1px 0 rgba(0,0,0,0.65),
+                -1px  1px 0 rgba(0,0,0,0.65),
+                 1px  1px 0 rgba(0,0,0,0.65),
+                /* Main thematic glows, more controlled */
+                0 0 7px var(--accent-color),   /* Peela (accent) glow, thoda nazdeek */
+                0 0 12px var(--primary-color); /* Gulabi (primary) glow, thoda door */
+        }
+
+
+        .wheel-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wheel-pointer {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid var(--accent-color);
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.4));
+        }
+
+        #spinWheel {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #wheelCenterButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-color);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 10px var(--primary-color), 0 0 5px var(--secondary-color);
+            margin-top: 20px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3), 0 0 20px var(--primary-color), 0 0 10px var(--secondary-color);
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2), 0 0 5px var(--primary-color);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: grey; 
+        }
+
+        #spinButton {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 10px var(--primary-color), 0 0 5px var(--secondary-color); }
+            50% { box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 25px var(--primary-color), 0 0 15px var(--secondary-color), 0 0 8px var(--accent-color); }
+            100% { box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 10px var(--primary-color), 0 0 5px var(--secondary-color); }
+        }
+        
+        .message-area, .form-area {
+            margin-top: 25px;
+            padding: 20px;
+            background: var(--bg-light-transparent);
+            border-radius: 15px;
+            font-size: 1.1em;
+        }
+        .message-area strong {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+         .message-area p {
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background-color: rgba(255,255,255,0.2);
+            color: var(--text-color);
+            font-size: 1em;
+        }
+        .form-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2em; /* Responsive size for heading */
+            }
+            .wheel-container {
+                width: 240px;
+                height: 240px;
+            }
+            #wheelCenterButton {
+                width: 60px;
+                height: 60px;
+            }
+            .btn {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+            .message-area, .form-area {
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 1.8em; /* Further responsive size for heading */
+            }
+            .wheel-container {
+                width: 200px;
+                height: 200px;
+            }
+            #wheelCenterButton {
+                width: 50px;
+                height: 50px;
+            }
+             .wheel-pointer {
+                border-left-width: 15px;
+                border-right-width: 15px;
+                border-top-width: 22px;
+                top: -8px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spin the Wheel & Win a Guaranteed Prize!</h1>
+
+        <div class="wheel-container">
+            <img id="spinWheel" src="spin.png" alt="Spin Wheel of Prizes">
+            <img id="wheelCenterButton" src="button.png" alt="Wheel Center">
+            <div class="wheel-pointer"></div>
+        </div>
+
+        <button id="spinButton" class="btn">SPIN NOW</button>
+
+        <div id="prizeDisplay" class="message-area hidden"></div>
+        
+        <div id="claimFormSection" class="form-area hidden">
+            <form id="claimForm">
+                <input type="text" id="nameInput" class="form-input" placeholder="Your Name" required>
+                <input type="tel" id="mobileInput" class="form-input" placeholder="Your Mobile Number" inputmode="numeric" pattern="[0-9]*" required>
+                <button type="submit" id="submitDetailsButton" class="btn">Save Details & Proceed</button>
+            </form>
+        </div>
+        
+        <div id="shareSection" class="message-area hidden">
+            <p id="shareInstructionText">Details saved! Now please share with 10 WhatsApp friends to complete your claim.</p>
+            <button id="whatsappShareButton" class="btn">Share on WhatsApp</button>
+        </div>
+
+
+        <div id="submissionSuccessMessage" class="message-area hidden"></div>
+    </div>
+
+    <script>
+        const prizes = [
+            "₹100 PayTM Cash", "Movie Ticket", "iPhone 14", "Samsung TV", "Smartwatch",
+            "Bluetooth Speaker", "AirPods", "Better Luck Next Time", "Amazon Voucher ₹50",
+            "Free Coffee Coupon", "20% Discount Voucher", "Surprise Gift Box"
+        ];
+
+        const winnablePrizes = prizes.filter(prize => prize !== "Better Luck Next Time");
+        const totalSegments = prizes.length;
+        const degreesPerSegment = 360 / totalSegments;
+
+        const spinWheelElement = document.getElementById('spinWheel');
+        const spinButtonElement = document.getElementById('spinButton');
+        const prizeDisplayElement = document.getElementById('prizeDisplay');
+        
+        const claimFormSectionElement = document.getElementById('claimFormSection');
+        const claimFormElement = document.getElementById('claimForm');
+        const nameInputElement = document.getElementById('nameInput');
+        const mobileInputElement = document.getElementById('mobileInput');
+        const submitDetailsButtonElement = document.getElementById('submitDetailsButton');
+        
+        const shareSectionElement = document.getElementById('shareSection');
+        const shareInstructionTextElement = document.getElementById('shareInstructionText');
+        const whatsappShareButtonElement = document.getElementById('whatsappShareButton');
+        
+        const submissionSuccessMessageElement = document.getElementById('submissionSuccessMessage');
+
+        let isSpinning = false;
+        let accumulatedRotation = 0; 
+        let currentWinningPrize = "";
+
+        spinButtonElement.addEventListener('click', () => {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinButtonElement.disabled = true;
+            spinButtonElement.style.animation = 'none';
+
+            prizeDisplayElement.classList.add('hidden');
+            claimFormSectionElement.classList.add('hidden');
+            shareSectionElement.classList.add('hidden');
+            submissionSuccessMessageElement.classList.add('hidden');
+            
+            nameInputElement.disabled = false;
+            mobileInputElement.disabled = false;
+            nameInputElement.value = ''; // Clear previous input
+            mobileInputElement.value = ''; // Clear previous input
+            submitDetailsButtonElement.disabled = false;
+            submitDetailsButtonElement.textContent = "Save Details & Proceed";
+            whatsappShareButtonElement.disabled = false;
+            whatsappShareButtonElement.textContent = "Share on WhatsApp";
+
+
+            const randomIndex = Math.floor(Math.random() * winnablePrizes.length);
+            currentWinningPrize = winnablePrizes[randomIndex];
+            
+            const targetSegmentIndex = prizes.indexOf(currentWinningPrize);
+            const spinCycles = 6 + Math.floor(Math.random() * 5);
+            const targetSegmentCenterAngle = (targetSegmentIndex * degreesPerSegment) + (degreesPerSegment / 2);
+            const randomOffset = (Math.random() - 0.5) * (degreesPerSegment * 0.7);
+            const desiredFinalPositionOnWheel = targetSegmentCenterAngle + randomOffset;
+            const currentBaseRotation = accumulatedRotation % 360;
+            accumulatedRotation = currentBaseRotation + (spinCycles * 360) - desiredFinalPositionOnWheel;
+            
+            spinWheelElement.style.transform = `rotate(${accumulatedRotation}deg)`;
+        });
+
+        spinWheelElement.addEventListener('transitionend', () => {
+            if (!isSpinning) return;
+            isSpinning = false; 
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+            }
+
+            prizeDisplayElement.innerHTML = `Congratulations! You won <strong>${currentWinningPrize}</strong>!
+                                             <p>To claim your prize, please fill your details below and then share with 10 friends.</p>`;
+            prizeDisplayElement.classList.remove('hidden');
+            claimFormSectionElement.classList.remove('hidden'); 
+            shareSectionElement.classList.add('hidden'); 
+            submissionSuccessMessageElement.classList.add('hidden');
+        });
+
+        claimFormElement.addEventListener('submit', (event) => {
+            event.preventDefault(); 
+            const name = nameInputElement.value.trim();
+            const mobile = mobileInputElement.value.trim();
+
+            if (!name || !mobile) {
+                alert("Please fill in both your name and mobile number.");
+                return;
+            }
+            if (!/^\d{10,}$/.test(mobile)) {
+                alert("Please enter a valid mobile number (at least 10 digits).");
+                return;
+            }
+
+            nameInputElement.disabled = true;
+            mobileInputElement.disabled = true;
+            submitDetailsButtonElement.disabled = true;
+            submitDetailsButtonElement.textContent = "Details Saved!";
+            
+            shareInstructionTextElement.innerHTML = `Great, details for <strong>${currentWinningPrize}</strong> saved!<br>Now please share with 10 WhatsApp friends to complete your claim.`;
+            shareSectionElement.classList.remove('hidden');
+        });
+
+        whatsappShareButtonElement.addEventListener('click', () => {
+            const shareText = "🎉 I just won an amazing prize on this Spin & Win page! 🎁 Try your luck too! 👉 ";
+            const pageUrl = window.location.href;
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + pageUrl)}`;
+            
+            window.open(whatsappUrl, '_blank');
+
+            whatsappShareButtonElement.disabled = true;
+            whatsappShareButtonElement.textContent = "Sharing...";
+
+            setTimeout(() => {
+                prizeDisplayElement.classList.add('hidden');
+                claimFormSectionElement.classList.add('hidden');
+                shareSectionElement.classList.add('hidden');
+
+                submissionSuccessMessageElement.innerHTML = `Your prize claim for <strong>${currentWinningPrize}</strong> has been submitted successfully!<br>Congratulations again! You will be contacted soon.`;
+                submissionSuccessMessageElement.classList.remove('hidden');
+                
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                }
+            }, 4000);
+        });
+
+
+        const imgSpin = new Image();
+        imgSpin.src = 'spin.png';
+        imgSpin.onerror = function() {
+            console.warn("Warning: spin.png could not be loaded. The wheel will not be visible.");
+            if (spinWheelElement) spinWheelElement.alt = "Spin wheel image (spin.png) is missing!";
+        };
+
+        const imgButton = new Image();
+        imgButton.src = 'button.png';
+        imgButton.onerror = function() {
+            console.warn("Warning: button.png could not be loaded. The center button image will not be visible.");
+            const centerBtnEl = document.getElementById('wheelCenterButton');
+            if (centerBtnEl) centerBtnEl.alt = "Center button (button.png) missing";
+        };
+
+    </script>
+</body>
+</html>
+<script type="text/javascript">
+	atOptions = {
+		'key' : '420c22a13e8ae6b9817c231d810faccb',
+		'format' : 'iframe',
+		'height' : 60,
+		'width' : 468,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/420c22a13e8ae6b9817c231d810faccb/invoke.js"></script>
+<script type="text/javascript">
+	atOptions = {
+		'key' : '420c22a13e8ae6b9817c231d810faccb',
+		'format' : 'iframe',
+		'height' : 60,
+		'width' : 468,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/420c22a13e8ae6b9817c231d810faccb/invoke.js"></script>
